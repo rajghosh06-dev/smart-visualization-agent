@@ -308,9 +308,7 @@ body {
 
 /* Dataset List */
 .dataset-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: block;
     margin-bottom: 16px;
     max-height: 200px;
     overflow-y: auto;
@@ -322,6 +320,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 10px 14px;
+    margin-bottom: 8px;
     background: var(--item-bg);
     border: 1px solid var(--item-border);
     border-radius: 10px;
@@ -416,17 +415,17 @@ body {
 
 /* History List */
 .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: block;
     max-height: 220px;
     overflow-y: auto;
     padding-right: 4px;
 }
 
 .history-item {
+    display: block;
     font-size: 12px;
     padding: 8px 12px;
+    margin-bottom: 6px;
     background: var(--item-bg);
     border: 1px solid var(--item-border);
     border-radius: 8px;
