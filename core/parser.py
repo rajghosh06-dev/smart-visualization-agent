@@ -19,8 +19,11 @@ def load_llm_in_background():
     llm_status = "Loading"
     try:
         logger.info(f"Loading local LLM model: {MODEL_NAME}...")
-        # This will download the model to ~/.cache/gpt4all/ if not already present
-        model_instance = GPT4All(model_name=MODEL_NAME, allow_download=True)
+        # Download and load the model inside the project's dedicated models directory
+        import os
+        model_path = os.path.join("core", "models")
+        os.makedirs(model_path, exist_ok=True)
+        model_instance = GPT4All(model_name=MODEL_NAME, model_path=model_path, allow_download=True)
         llm_status = "Ready"
         logger.info("Local LLM model is ready and loaded!")
     except Exception as e:
