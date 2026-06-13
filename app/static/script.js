@@ -60,29 +60,60 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/llm-status")
             .then(res => res.json())
             .then(data => {
-                statusDetailsEl.textContent = `Model: ${data.model_name}`;
-                
                 if (data.status === "Ready") {
                     statusDotEl.className = "status-indicator-dot ready";
                     statusTextEl.textContent = "Local LLM: Ready";
+                    statusDetailsEl.textContent = `Model: ${data.model_name}`;
                     btnLlmModeEl.disabled = false;
                     clearInterval(llmStatusPollInterval);
                 } else if (data.status === "Loading") {
                     statusDotEl.className = "status-indicator-dot loading";
                     statusTextEl.textContent = "Local LLM: Loading...";
-                    statusDetailsEl.textContent += " (Downloading/Loading on CPU)";
+                    statusDetailsEl.textContent = `Model: ${data.model_name} (Downloading/Loading...)`;
+                    btnLlmModeEl.disabled = true;
+                } else if (data.status === "Not Installed") {
+                    statusDotEl.className = "status-indicator-dot";
+                    statusTextEl.textContent = "Local LLM: Not Installed";
+                    statusDetailsEl.innerHTML = `
+                        <span style="font-size:11px;opacity:0.8;">Local model file not found in core/models/.</span>
+                        <button class="btn btn-primary" id="btn-download-llm" style="margin-top:8px;padding:6px 10px;font-size:11px;width:100%;font-weight:600;">
+                            Download Model (1.98 GB)
+                        </button>
+                    `;
+                    btnLlmModeEl.disabled = true;
+                    
+                    const btnDownload = document.getElementById("btn-download-llm");
+                    if (btnDownload) {
+                        btnDownload.addEventListener("click", () => {
+                            btnDownload.disabled = true;
+                            btnDownload.textContent = "Initiating Download...";
+                            fetch("/api/llm-download", { method: "POST" })
+                                .then(res => res.json())
+                                .then(resData => {
+                                    showToast("LLM download started in background!");
+                                    checkLlmStatus();
+                                })
+                                .catch(err => {
+                                    showToast("Failed to start download.", true);
+                                    btnDownload.disabled = false;
+                                    btnDownload.textContent = "Download Model (1.98 GB)";
+                                });
+                        });
+                    }
                 } else if (data.status === "Failed") {
                     statusDotEl.className = "status-indicator-dot failed";
                     statusTextEl.textContent = "Local LLM: Offline";
                     statusDetailsEl.textContent = data.error || "Failed to load model. Running heuristics.";
+                    btnLlmModeEl.disabled = true;
                     clearInterval(llmStatusPollInterval);
                 } else {
                     statusDotEl.className = "status-indicator-dot";
                     statusTextEl.textContent = `Local LLM: ${data.status}`;
+                    btnLlmModeEl.disabled = true;
                 }
             })
             .catch(err => {
-                logger.error("LLM status fetch error:", err);
+                console.error("LLM status fetch error:", err);
                 statusDotEl.className = "status-indicator-dot failed";
                 statusTextEl.textContent = "Local LLM: Status Error";
                 statusDetailsEl.textContent = "Backend unreachable.";

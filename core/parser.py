@@ -13,17 +13,23 @@ model_instance = None
 llm_status = "Not Started"
 llm_error = None
 
-def load_llm_in_background():
-    """Load the GPT4All model in a background thread to avoid blocking server startup."""
+def load_llm_in_background(force_download=False):
+    """Load the GPT4All model in a background thread. Only downloads if force_download is True."""
     global model_instance, llm_status, llm_error
-    llm_status = "Loading"
     try:
-        logger.info(f"Loading local LLM model: {MODEL_NAME}...")
-        # Download and load the model inside the project's dedicated models directory
         import os
         model_path = os.path.join("core", "models")
         os.makedirs(model_path, exist_ok=True)
-        model_instance = GPT4All(model_name=MODEL_NAME, model_path=model_path, allow_download=True)
+        
+        full_path = os.path.join(model_path, MODEL_NAME)
+        if not os.path.exists(full_path) and not force_download:
+            llm_status = "Not Installed"
+            logger.info("Local LLM model not found on disk. Download pending user request.")
+            return
+            
+        llm_status = "Loading"
+        logger.info(f"Loading local LLM model: {MODEL_NAME} (force_download={force_download})...")
+        model_instance = GPT4All(model_name=MODEL_NAME, model_path=model_path, allow_download=force_download)
         llm_status = "Ready"
         logger.info("Local LLM model is ready and loaded!")
     except Exception as e:
@@ -31,9 +37,9 @@ def load_llm_in_background():
         llm_error = str(e)
         logger.error(f"Failed to load local LLM model: {e}")
 
-def init_llm():
+def init_llm(force_download=False):
     """Trigger background loading of the local LLM."""
-    thread = threading.Thread(target=load_llm_in_background, daemon=True)
+    thread = threading.Thread(target=load_llm_in_background, args=(force_download,), daemon=True)
     thread.start()
 
 def parse_prompt_heuristics(prompt: str, columns: list):

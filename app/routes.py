@@ -45,6 +45,15 @@ async def get_llm_status():
         "error": llm_error
     }
 
+@router.post("/api/llm-download")
+async def trigger_llm_download():
+    """Explicitly trigger downloading of the local LLM model."""
+    from core.parser import init_llm, llm_status
+    if llm_status in ["Ready", "Loading"]:
+        return {"message": f"LLM is already in status: {llm_status}", "status": llm_status}
+    init_llm(force_download=True)
+    return {"message": "LLM download initiated in background.", "status": "Loading"}
+
 @router.get("/api/datasets")
 async def list_datasets():
     """List all available datasets in the data folder."""
