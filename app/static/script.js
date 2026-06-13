@@ -34,6 +34,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableContainerEl = document.getElementById("table-container");
     const toastEl = document.getElementById("toast");
 
+    const btnSidebarCollapseEl = document.getElementById("btn-sidebar-collapse");
+    const btnSidebarExpandEl = document.getElementById("btn-sidebar-expand");
+    const sidebarEl = document.querySelector(".sidebar");
+    const appContainerEl = document.querySelector(".app-container");
+    const btnThemeToggleEl = document.getElementById("btn-theme-toggle");
+
+    // --- Load Saved Theme Preference ---
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    document.body.setAttribute("data-theme", savedTheme);
+
     // Application State
     let activeDataset = null;
     let datasetColumns = [];
@@ -408,6 +418,51 @@ document.addEventListener("DOMContentLoaded", () => {
         overrideSectionEl.classList.toggle("open");
     });
 
+    // --- Collapsible Sidebar Handlers ---
+    btnSidebarCollapseEl.addEventListener("click", () => {
+        sidebarEl.classList.add("collapsed");
+        appContainerEl.classList.add("sidebar-collapsed");
+        btnSidebarExpandEl.style.display = "flex";
+        
+        if (chartViewportEl.classList.contains("js-plotly-plot")) {
+            setTimeout(() => {
+                Plotly.Plots.resize(chartViewportEl);
+            }, 300);
+        }
+    });
+
+    btnSidebarExpandEl.addEventListener("click", () => {
+        sidebarEl.classList.remove("collapsed");
+        appContainerEl.classList.remove("sidebar-collapsed");
+        btnSidebarExpandEl.style.display = "none";
+        
+        if (chartViewportEl.classList.contains("js-plotly-plot")) {
+            setTimeout(() => {
+                Plotly.Plots.resize(chartViewportEl);
+            }, 300);
+        }
+    });
+
+    // --- Theme Toggler ---
+    btnThemeToggleEl.addEventListener("click", () => {
+        let theme = document.body.getAttribute("data-theme") === "light" ? "dark" : "light";
+        document.body.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+
+        // Update active Plotly chart colors on-the-fly
+        if (chartViewportEl.classList.contains("js-plotly-plot")) {
+            const layoutUpdates = getPlotlyThemeLayout(theme);
+            Plotly.relayout(chartViewportEl, layoutUpdates);
+        }
+    });
+
+    // --- Responsive Window Resize ---
+    window.addEventListener("resize", () => {
+        if (chartViewportEl.classList.contains("js-plotly-plot")) {
+            Plotly.Plots.resize(chartViewportEl);
+        }
+    });
+
     // --- Submit Visualization Query ---
     visualizeFormEl.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -449,6 +504,102 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // --- Plotly Theme Styling Helpers ---
+    function getPlotlyThemeLayout(theme) {
+        if (theme === "light") {
+            return {
+                paper_bgcolor: "rgba(0, 0, 0, 0)",
+                plot_bgcolor: "rgba(15, 23, 42, 0.04)",
+                font: {
+                    family: "Inter, system-ui, -apple-system, sans-serif",
+                    size: 12,
+                    color: "#0f172a"
+                },
+                title: {
+                    font: { size: 16, color: "#0284c7", weight: "bold" }
+                },
+                legend: {
+                    bgcolor: "rgba(255, 255, 255, 0.85)",
+                    bordercolor: "rgba(15, 23, 42, 0.1)",
+                    font: { color: "#334155" }
+                },
+                "xaxis.gridcolor": "rgba(15, 23, 42, 0.08)",
+                "xaxis.zerolinecolor": "rgba(15, 23, 42, 0.12)",
+                "xaxis.tickfont.color": "#64748b",
+                "xaxis.title.font.color": "#334155",
+                "yaxis.gridcolor": "rgba(15, 23, 42, 0.08)",
+                "yaxis.zerolinecolor": "rgba(15, 23, 42, 0.12)",
+                "yaxis.tickfont.color": "#64748b",
+                "yaxis.title.font.color": "#334155"
+            };
+        } else {
+            return {
+                paper_bgcolor: "rgba(0, 0, 0, 0)",
+                plot_bgcolor: "rgba(15, 23, 42, 0.4)",
+                font: {
+                    family: "Inter, system-ui, -apple-system, sans-serif",
+                    size: 12,
+                    color: "#e2e8f0"
+                },
+                title: {
+                    font: { size: 16, color: "#00f2fe", weight: "bold" }
+                },
+                legend: {
+                    bgcolor: "rgba(15, 23, 42, 0.6)",
+                    bordercolor: "rgba(255, 255, 255, 0.1)",
+                    font: { color: "#cbd5e1" }
+                },
+                "xaxis.gridcolor": "rgba(255, 255, 255, 0.06)",
+                "xaxis.zerolinecolor": "rgba(255, 255, 255, 0.12)",
+                "xaxis.tickfont.color": "#94a3b8",
+                "xaxis.title.font.color": "#cbd5e1",
+                "yaxis.gridcolor": "rgba(255, 255, 255, 0.06)",
+                "yaxis.zerolinecolor": "rgba(255, 255, 255, 0.12)",
+                "yaxis.tickfont.color": "#94a3b8",
+                "yaxis.title.font.color": "#cbd5e1"
+            };
+        }
+    }
+
+    function setNestedProperty(obj, path, value) {
+        const parts = path.split(".");
+        let current = obj;
+        for (let i = 0; i < parts.length - 1; i++) {
+            const part = parts[i];
+            if (!current[part] || typeof current[part] !== "object") {
+                current[part] = {};
+            }
+            current = current[part];
+        }
+        current[parts[parts.length - 1]] = value;
+    }
+
+    function renderPlotlyChart(plotlyData) {
+        // Strip hardcoded sizing from backend/express defaults
+        delete plotlyData.layout.width;
+        delete plotlyData.layout.height;
+        plotlyData.layout.autosize = true;
+        
+        // Set standard margins
+        plotlyData.layout.margin = { l: 50, r: 30, t: 70, b: 50 };
+        
+        // Merge layout settings based on active theme
+        const currentTheme = document.body.getAttribute("data-theme") || "dark";
+        const themeLayout = getPlotlyThemeLayout(currentTheme);
+        
+        // Apply theme variables
+        Object.keys(themeLayout).forEach(key => {
+            setNestedProperty(plotlyData.layout, key, themeLayout[key]);
+        });
+
+        chartViewportEl.innerHTML = "";
+        Plotly.newPlot(chartViewportEl, plotlyData.data, plotlyData.layout, {
+            responsive: true,
+            displayModeBar: true,
+            displaylogo: false
+        });
+    }
+
     function generateChart(prompt, overrides = null) {
         // Show loader in viewport
         chartViewportEl.innerHTML = `
@@ -484,12 +635,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const plotlyData = data.plotly_data;
 
             // Render Plotly Chart
-            chartViewportEl.innerHTML = "";
-            Plotly.newPlot(chartViewportEl, plotlyData.data, plotlyData.layout, {
-                responsive: true,
-                displayModeBar: true,
-                displaylogo: false
-            });
+            renderPlotlyChart(plotlyData);
 
             // Update Parser Mode tag
             parserTagEl.textContent = config.parser_used.toUpperCase();
@@ -574,12 +720,7 @@ document.addEventListener("DOMContentLoaded", () => {
         promptInputEl.value = item.prompt;
 
         // Render Plotly Chart
-        chartViewportEl.innerHTML = "";
-        Plotly.newPlot(chartViewportEl, item.plotlyData.data, item.plotlyData.layout, {
-            responsive: true,
-            displayModeBar: true,
-            displaylogo: false
-        });
+        renderPlotlyChart(item.plotlyData);
 
         // Update tags and inputs
         parserTagEl.textContent = item.config.parser_used.toUpperCase();
