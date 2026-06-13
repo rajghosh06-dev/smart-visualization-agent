@@ -38,11 +38,14 @@ async def read_root():
 
 @router.get("/api/llm-status")
 async def get_llm_status():
-    """Retrieve background LLM loading status."""
+    """Retrieve background LLM loading status and compatibility metrics."""
+    from core.parser import check_system_compatibility
+    compatibility = check_system_compatibility()
     return {
         "status": llm_status,
         "model_name": MODEL_NAME,
-        "error": llm_error
+        "error": llm_error,
+        "compatibility": compatibility
     }
 
 @router.post("/api/llm-download")

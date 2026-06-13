@@ -2,6 +2,11 @@ import re
 import json
 import logging
 import threading
+import platform
+import sys
+import shutil
+import psutil
+import subprocess
 from gpt4all import GPT4All
 
 # Setup logging
@@ -13,6 +18,82 @@ model_instance = None
 llm_status = "Not Started"
 llm_error = None
 
+def check_avx_support() -> bool:
+    """Check if the CPU supports AVX instructions required by llama.cpp."""
+    if platform.system() == "Windows":
+        try:
+            import ctypes
+            # PF_AVX_INSTRUCTIONS_AVAILABLE is defined as 19 in Windows SDK
+            return ctypes.windll.kernel32.IsProcessorFeaturePresent(19) != 0
+        except Exception:
+            pass
+    elif platform.system() == "Darwin":
+        try:
+            output = subprocess.check_output(["sysctl", "-a"]).decode().lower()
+            return "hw.optional.avx1_0: 1" in output or "avx" in output
+        except Exception:
+            pass
+    else:  # Linux / Unix
+        try:
+            with open("/proc/cpuinfo", "r") as f:
+                cpuinfo = f.read().lower()
+                return "avx" in cpuinfo
+        except Exception:
+            pass
+    return True  # Optimistic fallback if check fails
+
+def check_system_compatibility() -> dict:
+    """
+    Check if the local system has the required specifications to run the LLM.
+    Returns compatibility metrics.
+    """
+    # RAM Check
+    total_ram_gb = psutil.virtual_memory().total / (1024**3)
+    avail_ram_gb = psutil.virtual_memory().available / (1024**3)
+    
+    # Disk Check (need at least 2.5 GB free space for models)
+    free_space_gb = shutil.disk_usage(".").free / (1024**3)
+    
+    # AVX Check
+    has_avx = check_avx_support()
+    
+    # 64-bit OS Check
+    is_64bit = (sys.maxsize > 2**32)
+    
+    # Rules
+    ram_pass = total_ram_gb >= 6.0 and avail_ram_gb >= 1.5  # Allow some leeway for 8GB RAM machines
+    disk_pass = free_space_gb >= 2.5
+    cpu_pass = has_avx
+    os_pass = is_64bit
+    
+    compatible = ram_pass and disk_pass and cpu_pass and os_pass
+    
+    return {
+        "compatible": compatible,
+        "metrics": {
+            "ram": {
+                "status": "pass" if ram_pass else "fail",
+                "value": f"{total_ram_gb:.1f} GB total, {avail_ram_gb:.1f} GB available",
+                "required": ">=6.0 GB total, >=1.5 GB available"
+            },
+            "disk": {
+                "status": "pass" if disk_pass else "fail",
+                "value": f"{free_space_gb:.1f} GB free space",
+                "required": ">=2.5 GB free space"
+            },
+            "cpu_avx": {
+                "status": "pass" if cpu_pass else "fail",
+                "value": "Supported" if has_avx else "Not Supported (AVX missing)",
+                "required": "AVX instructions required"
+            },
+            "os_64": {
+                "status": "pass" if os_pass else "fail",
+                "value": "64-bit" if is_64bit else "32-bit",
+                "required": "64-bit OS required"
+            }
+        }
+    }
+
 def load_llm_in_background(force_download=False):
     """Load the GPT4All model in a background thread. Only downloads if force_download is True."""
     global model_instance, llm_status, llm_error
@@ -20,6 +101,16 @@ def load_llm_in_background(force_download=False):
         import os
         model_path = os.path.join("core", "models")
         os.makedirs(model_path, exist_ok=True)
+        
+        # Check system compatibility if downloading is requested
+        if force_download:
+            comp = check_system_compatibility()
+            if not comp["compatible"]:
+                llm_status = "Incompatible"
+                failing = [k for k, v in comp["metrics"].items() if v["status"] == "fail"]
+                llm_error = f"Hardware compatibility checks failed: {', '.join(failing)}. Local LLM cannot run on this machine."
+                logger.error(f"Cannot load LLM: {llm_error}")
+                return
         
         full_path = os.path.join(model_path, MODEL_NAME)
         if not os.path.exists(full_path) and not force_download:

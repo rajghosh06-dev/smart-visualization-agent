@@ -60,6 +60,50 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/llm-status")
             .then(res => res.json())
             .then(data => {
+                const isCompatible = data.compatibility ? data.compatibility.compatible : true;
+                
+                if (!isCompatible) {
+                    statusDotEl.className = "status-indicator-dot failed";
+                    statusTextEl.textContent = "Local LLM: Unsupported";
+                    btnLlmModeEl.disabled = true;
+                    
+                    // Build list of failing parameters
+                    let failHTML = '<span style="color:#f43f5e;font-weight:600;display:block;margin-bottom:6px;">Hardware Checks Failed:</span>';
+                    if (data.compatibility && data.compatibility.metrics) {
+                        const metrics = data.compatibility.metrics;
+                        if (metrics.cpu_avx.status === "fail") {
+                            failHTML += `<div style="font-size:10px;margin-bottom:4px;color:#cbd5e1;">• CPU AVX instructions missing</div>`;
+                        }
+                        if (metrics.ram.status === "fail") {
+                            failHTML += `<div style="font-size:10px;margin-bottom:4px;color:#cbd5e1;">• Insufficient RAM: ${metrics.ram.value} (min: 6GB)</div>`;
+                        }
+                        if (metrics.disk.status === "fail") {
+                            failHTML += `<div style="font-size:10px;margin-bottom:4px;color:#cbd5e1;">• Low Disk Space: ${metrics.disk.value} (min: 2.5GB)</div>`;
+                        }
+                        if (metrics.os_64.status === "fail") {
+                            failHTML += `<div style="font-size:10px;margin-bottom:4px;color:#cbd5e1;">• Requires 64-bit OS</div>`;
+                        }
+                    }
+                    failHTML += '<small style="display:block;margin-top:8px;color:#94a3b8;line-height:1.2;">Agent will run in <strong>Rule-Based Heuristic Mode</strong> (100% offline, 0MB RAM footprint).</small>';
+                    statusDetailsEl.innerHTML = failHTML;
+                    
+                    // Switch interface parsing mode to heuristic if it was set to llm or hybrid
+                    if (currentMode === "llm" || currentMode === "hybrid") {
+                        modeButtons.forEach(b => {
+                            if (b.getAttribute("data-mode") === "heuristic") {
+                                b.classList.add("active");
+                            } else {
+                                b.classList.remove("active");
+                            }
+                        });
+                        currentMode = "heuristic";
+                    }
+                    
+                    clearInterval(llmStatusPollInterval);
+                    return;
+                }
+
+                // If compatible, follow standard state renders
                 if (data.status === "Ready") {
                     statusDotEl.className = "status-indicator-dot ready";
                     statusTextEl.textContent = "Local LLM: Ready";
@@ -100,9 +144,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 });
                         });
                     }
-                } else if (data.status === "Failed") {
+                } else if (data.status === "Incompatible" || data.status === "Failed") {
                     statusDotEl.className = "status-indicator-dot failed";
-                    statusTextEl.textContent = "Local LLM: Offline";
+                    statusTextEl.textContent = "Local LLM: Unsupported";
                     statusDetailsEl.textContent = data.error || "Failed to load model. Running heuristics.";
                     btnLlmModeEl.disabled = true;
                     clearInterval(llmStatusPollInterval);
