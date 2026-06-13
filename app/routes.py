@@ -36,6 +36,11 @@ async def read_root():
     """Serve the main SPA dashboard."""
     return FileResponse("app/templates/index.html")
 
+@router.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Serve the application favicon."""
+    return FileResponse("app/static/logo.png")
+
 @router.get("/api/llm-status")
 async def get_llm_status():
     """Retrieve background LLM loading status and compatibility metrics."""

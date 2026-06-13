@@ -4,6 +4,12 @@ An offline-first, local AI-powered dashboard designed to ingest tabular datasets
 
 ---
 
+## 📖 Quick Documentation Links
+*   ⚙️ **[Technical Setup Instructions (setup.md)](setup.md)**: Details machine pre-requisites, environment setup, package installations, manual/automated model downloads, and troubleshooting port blocks.
+*   📘 **[User Workflow Manual (guide.md)](guide.md)**: End-user handbook explaining query phrasing, supported chart types, manual adjustments, sidebar collapse, and dark/light modes.
+
+---
+
 ## Technical Overview
 
 The **Smart Visualization Agent** integrates a FastAPI backend with a modern, responsive single-page application (SPA) frontend. User queries are interpreted using a hybrid parsing pipeline that combines a local quantized Large Language Model (LLM) with a highly optimized, rule-based heuristic processor. Interactive visualizations are generated server-side using Plotly and rendered client-side.
