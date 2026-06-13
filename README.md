@@ -1,6 +1,18 @@
 # Smart Visualization Agent
 
+[![Built For](https://img.shields.io/badge/Built%20For-Agents%20League%20Hackathon%202026-blueviolet?style=for-the-badge)](https://github.com/rajghosh06-dev/smart-visualization-agent)
+[![Track](https://img.shields.io/badge/Track-Creative%20Apps-magenta?style=for-the-badge)](https://github.com/rajghosh06-dev/smart-visualization-agent)
+[![Integration](https://img.shields.io/badge/Integration-Microsoft%20Fabric%20IQ-blue?style=for-the-badge)](https://github.com/rajghosh06-dev/smart-visualization-agent)
+
 An offline-first, local AI-powered dashboard designed to ingest tabular datasets (CSV and Microsoft Excel formats) and generate interactive visualizations directly from natural language prompts. This project runs entirely offline on local hardware, ensuring data privacy and zero cloud execution costs.
+
+> [!IMPORTANT]
+> **Hackathon Note**: This project was built for the **Agents League Hackathon 2026** under the **Creative Apps** track, integrating **Microsoft Fabric IQ**.
+
+---
+
+## 🎥 Walkthrough Demo
+🔗 **[Click here to watch the 2–3 minute video demonstration]()** *(Demo video link to be added)*
 
 ---
 
