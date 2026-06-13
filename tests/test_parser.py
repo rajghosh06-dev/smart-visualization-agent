@@ -79,3 +79,17 @@ def test_chart_generation(sample_df):
     parsed_hist = {"chart_type": "histogram", "x": "cotton", "y": None}
     fig_hist = generate_chart(sample_df, parsed_hist)
     assert fig_hist is not None
+
+def test_get_suggested_prompts():
+    from core.parser import get_suggested_prompts
+    df_sample = pd.read_csv("data/sample.csv")
+    suggestions_sample = get_suggested_prompts(df_sample)
+    assert len(suggestions_sample) == 5
+    assert "Show total exports by state" in suggestions_sample
+    assert "Histogram of cotton values" in suggestions_sample
+
+    df_sample2 = pd.read_csv("data/sample2.csv")
+    suggestions_sample2 = get_suggested_prompts(df_sample2)
+    assert len(suggestions_sample2) == 5
+    assert "Show pop by country" in suggestions_sample2
+    assert "Scatter plot lifeExp vs gdpPercap" in suggestions_sample2

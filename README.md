@@ -14,6 +14,18 @@ An offline-first, local AI-powered dashboard designed to ingest tabular datasets
 
 The **Smart Visualization Agent** integrates a FastAPI backend with a modern, responsive single-page application (SPA) frontend. User queries are interpreted using a hybrid parsing pipeline that combines a local quantized Large Language Model (LLM) with a highly optimized, rule-based heuristic processor. Interactive visualizations are generated server-side using Plotly and rendered client-side.
 
+### Technology Stack
+*   **Backend Framework**: Python 3.14, FastAPI, Uvicorn (ASGI server)
+*   **Data Processing**: Pandas, Openpyxl (Excel processing)
+*   **AI & NLP Parser**: GPT4All (quantized local inference), Psutil (hardware diagnostics)
+*   **Frontend Interface**: HTML5, Vanilla CSS3 (CSS Grid/Flexbox, custom dark/light theme variables), Vanilla ES6 JavaScript (asynchronous fetch, dynamic DOM rendering, custom transition bindings)
+*   **Visualization Engine**: Plotly Express (Python backend configuration) and Plotly.js (client-side interactive rendering via CDN)
+
+### Datasets Included
+The application comes pre-packaged with two sample datasets:
+*   **`sample.csv` (US Agricultural Exports)**: Taken from the Plotly datasets repository: [2011_us_ag_exports.csv](https://github.com/plotly/datasets/blob/master/2011_us_ag_exports.csv)
+*   **`sample2.csv` (Gapminder Demographic Data)**: Taken from the Plotly datasets repository: [gapminderDataFiveYear.csv](https://github.com/plotly/datasets/blob/master/gapminderDataFiveYear.csv)
+
 ### Key Architecture Components
 
 *   **FastAPI Backend Server**: Exposes asynchronous endpoints for listing files, uploading new datasets, retrieving system compatibility metrics, and performing natural language visualization parsing.

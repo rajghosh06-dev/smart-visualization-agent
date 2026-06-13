@@ -97,11 +97,16 @@ async def get_dataset_details(filename: str):
         # Get preview rows (first 5 rows converted to simple objects)
         preview_data = df.head(5).fillna("").to_dict(orient="records")
         
+        # Dynamic schema-driven suggested prompts
+        from core.parser import get_suggested_prompts
+        suggestions = get_suggested_prompts(df)
+        
         return {
             "filename": filename,
             "columns": col_types,
             "row_count": len(df),
-            "preview": preview_data
+            "preview": preview_data,
+            "suggestions": suggestions
         }
     except HTTPException as he:
         raise he
@@ -140,11 +145,16 @@ async def upload_dataset(file: UploadFile = File(...)):
         # Get preview rows (first 5 rows converted to simple objects)
         preview_data = df.head(5).fillna("").to_dict(orient="records")
         
+        # Dynamic schema-driven suggested prompts
+        from core.parser import get_suggested_prompts
+        suggestions = get_suggested_prompts(df)
+        
         return {
             "filename": file.filename,
             "columns": col_types,
             "row_count": len(df),
-            "preview": preview_data
+            "preview": preview_data,
+            "suggestions": suggestions
         }
     except Exception as e:
         # Cleanup file if saving/reading failed
@@ -197,8 +207,10 @@ async def visualize(
     try:
         fig = generate_chart(df, parsed)
         
-        # Serialize plotly figure to JSON
+        # Serialize plotly figure to JSON and decode binary arrays
         plotly_json = json.loads(fig.to_json())
+        from core.visualization import decode_plotly_bdata
+        plotly_json = decode_plotly_bdata(plotly_json)
         
         return {
             "chart_config": parsed,

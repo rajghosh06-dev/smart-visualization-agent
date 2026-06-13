@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const visualizeFormEl = document.getElementById("visualize-form");
     const promptInputEl = document.getElementById("prompt-input");
     const btnSubmitEl = document.getElementById("btn-submit");
-    const suggestedBtns = document.querySelectorAll(".suggested-btn");
     
     const chartViewportEl = document.getElementById("chart-viewport");
     const parserTagEl = document.getElementById("parser-tag");
@@ -203,6 +202,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     item.addEventListener("click", () => selectDataset(db.name));
                     datasetListEl.appendChild(item);
                 });
+                
+                // Auto-select first dataset on load if none is selected
+                if (!activeDataset && data.datasets.length > 0) {
+                    selectDataset(data.datasets[0].name);
+                }
             })
             .catch(err => {
                 showToast("Failed to fetch dataset list.", true);
@@ -289,10 +293,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Render Spreadsheet Preview
                 renderPreviewTable(data.preview, data.columns);
                 
+                // Render suggested prompts dynamically
+                renderSuggestedPrompts(data.suggestions);
+                
                 // Enable forms and prompts
                 promptInputEl.disabled = false;
                 btnSubmitEl.disabled = false;
-                suggestedBtns.forEach(btn => btn.disabled = false);
                 
                 showToast(`Dataset "${data.filename}" loaded successfully.`);
             })
@@ -301,6 +307,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 datasetStatsEl.textContent = "Error loading dataset.";
                 tableContainerEl.innerHTML = '<div class="table-placeholder text-danger">Failed to load dataset.</div>';
             });
+    }
+
+    const suggestedGridEl = document.getElementById("suggested-grid");
+
+    function renderSuggestedPrompts(suggestions) {
+        if (!suggestedGridEl) return;
+        suggestedGridEl.innerHTML = "";
+        
+        if (!suggestions || suggestions.length === 0) {
+            suggestedGridEl.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">No suggestions available.</span>';
+            return;
+        }
+        
+        suggestions.forEach(promptText => {
+            const btn = document.createElement("button");
+            btn.className = "suggested-btn";
+            btn.textContent = `"${promptText}"`;
+            btn.setAttribute("data-prompt", promptText);
+            btn.addEventListener("click", () => {
+                promptInputEl.value = promptText;
+                visualizeFormEl.requestSubmit();
+            });
+            suggestedGridEl.appendChild(btn);
+        });
     }
 
     selectDataset = function(filename) {
@@ -405,14 +435,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- Suggested Prompts click ---
-    suggestedBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            const promptText = btn.getAttribute("data-prompt");
-            promptInputEl.value = promptText;
-            // Submit form automatically
-            visualizeFormEl.requestSubmit();
-        });
-    });
+    // (Handled dynamically during button creation in renderSuggestedPrompts)
 
     // --- Collapsible Override Toggle ---
     btnToggleOverrideEl.addEventListener("click", () => {

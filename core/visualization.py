@@ -142,3 +142,26 @@ def generate_chart(df: pd.DataFrame, parsed: dict):
     )
 
     return fig
+
+def decode_plotly_bdata(val):
+    """
+    Recursively decodes base64 binary-encoded datasets in Plotly layout/data
+    and converts them back to standard Python lists.
+    """
+    import base64
+    import numpy as np
+
+    if isinstance(val, dict) and "bdata" in val and "dtype" in val:
+        try:
+            dtype = val["dtype"]
+            b64data = val["bdata"]
+            binary = base64.b64decode(b64data)
+            arr = np.frombuffer(binary, dtype=dtype)
+            return arr.tolist()
+        except Exception:
+            return val
+    elif isinstance(val, list):
+        return [decode_plotly_bdata(x) for x in val]
+    elif isinstance(val, dict):
+        return {k: decode_plotly_bdata(v) for k, v in val.items()}
+    return val

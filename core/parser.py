@@ -371,7 +371,7 @@ def parse_prompt(prompt: str, columns: list, mode: str = "hybrid") -> dict:
             logger.warning(f"LLM parsing failed, falling back to heuristics: {e}")
             
     # Fallback to heuristics
-    result = parse_prompt_heuristics(prompt, columns)
+    result = parse_prompt_heuristics(prompt, columns, mode=mode)
     if llm_status == "Loading":
         result["parser_used"] = "heuristic (LLM loading...)"
     elif llm_status == "Failed":
@@ -379,3 +379,112 @@ def parse_prompt(prompt: str, columns: list, mode: str = "hybrid") -> dict:
     else:
         result["parser_used"] = "heuristic"
     return result
+
+def get_suggested_prompts(df) -> list:
+    """
+    Generate 5 schema-driven suggested prompts based on the column types of the dataset.
+    Prioritizes specific patterns to match predefined sample prompts.
+    """
+    import pandas as pd
+    num_cols = []
+    cat_cols = []
+    time_cols = []
+    
+    # Simple semantic heuristics on columns
+    for col in df.columns:
+        col_lower = col.lower()
+        dtype = str(df[col].dtype)
+        is_num = "int" in dtype or "float" in dtype
+        
+        if "year" in col_lower or "date" in col_lower or "month" in col_lower or "time" in col_lower or "datetime" in dtype:
+            time_cols.append(col)
+        elif is_num:
+            num_cols.append(col)
+        else:
+            cat_cols.append(col)
+            
+    # Default category column
+    preferred_cats = ["state", "country", "continent", "category", "name", "code"]
+    best_cat = None
+    for pc in preferred_cats:
+        matched = [c for c in cat_cols if c.lower() == pc]
+        if matched:
+            best_cat = matched[0]
+            break
+    if not best_cat and cat_cols:
+        best_cat = cat_cols[0]
+    if not best_cat:
+        best_cat = df.columns[0]
+        
+    # Default numeric column
+    best_num = None
+    preferred_nums = ["total exports", "total", "pop", "lifeexp", "gdppercap", "beef", "poultry"]
+    for pn in preferred_nums:
+        matched = [c for c in num_cols if pn in c.lower()]
+        if matched:
+            best_num = matched[0]
+            break
+    if not best_num and num_cols:
+        best_num = num_cols[0]
+    if not best_num:
+        best_num = df.columns[-1]
+        
+    suggestions = []
+    
+    # 1. Bar Chart
+    if best_cat and best_num:
+        suggestions.append(f"Show {best_num} by {best_cat}")
+            
+    # 2. Scatter Plot
+    if "lifeexp" in [c.lower() for c in num_cols] and "gdppercap" in [c.lower() for c in num_cols]:
+        lifeExp_col = [c for c in num_cols if c.lower() == "lifeexp"][0]
+        gdpPercap_col = [c for c in num_cols if c.lower() == "gdppercap"][0]
+        suggestions.append(f"Scatter plot {lifeExp_col} vs {gdpPercap_col}")
+    elif "poultry" in [c.lower() for c in num_cols] and "total exports" in [c.lower() for c in num_cols]:
+        poultry_col = [c for c in num_cols if c.lower() == "poultry"][0]
+        tot_exp_col = [c for c in num_cols if c.lower() == "total exports"][0]
+        suggestions.append(f"Scatter plot {poultry_col} vs {tot_exp_col}")
+    elif len(num_cols) >= 2:
+        suggestions.append(f"Scatter plot {num_cols[1]} vs {best_num}")
+    else:
+        suggestions.append(f"Scatter plot {best_num} vs {best_cat}")
+        
+    # 3. Line Chart
+    if time_cols:
+        time_col = time_cols[0]
+        line_num = best_num
+        if line_num == time_col and len(num_cols) > 1:
+            line_num = [c for c in num_cols if c != time_col][0]
+        life_exps = [c for c in num_cols if c.lower() == "lifeexp"]
+        if life_exps:
+            line_num = life_exps[0]
+        suggestions.append(f"Line chart of {line_num} over {time_col}")
+    elif "dairy" in [c.lower() for c in num_cols]:
+        suggestions.append("Line chart of dairy production")
+    else:
+        line_num = num_cols[1] if len(num_cols) > 1 else best_num
+        suggestions.append(f"Line chart of {line_num}")
+            
+    # 4. Compare Multi-column
+    corn_cols = [c for c in num_cols if c.lower() == "corn"]
+    wheat_cols = [c for c in num_cols if c.lower() == "wheat"]
+    if corn_cols and wheat_cols:
+        suggestions.append("Compare corn and wheat exports")
+    elif len(num_cols) >= 2:
+        c1 = num_cols[0]
+        c2 = num_cols[1]
+        if c1 == best_num and len(num_cols) > 2:
+            c1 = num_cols[2]
+        suggestions.append(f"Compare {c1} and {c2}")
+    else:
+        suggestions.append(f"Compare {best_num} across {best_cat}")
+        
+    # 5. Histogram
+    cotton_cols = [c for c in num_cols if c.lower() == "cotton"]
+    if cotton_cols:
+        suggestions.append("Histogram of cotton values")
+    else:
+        hist_num = num_cols[-1] if num_cols else best_num
+        suggestions.append(f"Histogram of {hist_num} values")
+        
+    return suggestions
