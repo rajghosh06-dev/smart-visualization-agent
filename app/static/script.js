@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const tableContainerEl = document.getElementById("table-container");
     const toastEl = document.getElementById("toast");
+    const btnClearHistoryEl = document.getElementById("btn-clear-history");
 
     const btnSidebarCollapseEl = document.getElementById("btn-sidebar-collapse");
     const btnSidebarExpandEl = document.getElementById("btn-sidebar-expand");
@@ -417,6 +418,22 @@ document.addEventListener("DOMContentLoaded", () => {
     btnToggleOverrideEl.addEventListener("click", () => {
         overrideSectionEl.classList.toggle("open");
     });
+
+    // --- Clear History Handler ---
+    if (btnClearHistoryEl) {
+        btnClearHistoryEl.addEventListener("click", () => {
+            chartHistory = [];
+            renderHistory();
+            showToast("Session history cleared.");
+        });
+    }
+
+    // --- Click to dismiss toast notifications ---
+    if (toastEl) {
+        toastEl.addEventListener("click", () => {
+            toastEl.classList.remove("show");
+        });
+    }
 
     // --- Collapsible Sidebar Handlers ---
     btnSidebarCollapseEl.addEventListener("click", () => {

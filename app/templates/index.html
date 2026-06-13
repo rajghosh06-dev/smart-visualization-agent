@@ -55,7 +55,10 @@
 
             <!-- Chart History -->
             <div class="sidebar-section">
-                <h3><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Session History</h3>
+                <div class="section-header-row">
+                    <h3><svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Session History</h3>
+                    <button id="btn-clear-history" class="btn-clear" title="Clear History">Clear</button>
+                </div>
                 <div class="history-list" id="history-list">
                     <p class="empty-state">No charts generated yet.</p>
                 </div>

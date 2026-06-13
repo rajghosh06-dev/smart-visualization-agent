@@ -225,3 +225,14 @@ __marimo__/
 /data/*
 !/data/sample.csv
 !/data/sample2.csv
+
+# Local development scratch files and temporary execution artifacts
+scratch/
+tmp/
+temp/
+*.tmp
+*.temp
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
