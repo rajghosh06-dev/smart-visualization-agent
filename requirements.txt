@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+plotly
+pandas
+gpt4all
+openpyxl
+python-multipart
+jinja2
+pytest

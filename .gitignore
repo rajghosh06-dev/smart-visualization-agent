@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local GGUF LLM models
+*.gguf
+
+# Ingested datasets (ignore user uploads, keep default sample datasets)
+/data/*
+!/data/sample.csv
+!/data/sample2.csv
