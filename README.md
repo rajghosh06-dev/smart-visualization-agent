@@ -16,6 +16,25 @@ An offline-first, local AI-powered dashboard designed to ingest tabular datasets
 
 ---
 
+## 📸 Screenshots
+
+### 1. Launching the Application Server
+![Launching the Application Server](docs/screenshots/launch-browser-server.png)  
+
+### 2. Dashboard Overview
+![Dashboard Overview 1](docs/screenshots/interface1.jpeg)  
+![Dashboard Overview 2](docs/screenshots/interface2.jpeg)  
+
+### 3. Working with Datasets
+#### Example: Using `sample.csv`
+![Generated Chart Example using sample dataset](docs/screenshots/working-workspace-agent-sample-dataset.png)  
+
+#### Example: Using `sample2.csv`
+![Generated Chart Example using sample2 dataset](docs/screenshots/working-workspace-agent-sample2-dataset.png)  
+
+---
+
+
 ## 📖 Quick Documentation Links
 *   ⚙️ **[Technical Setup Instructions (setup.md)](setup.md)**: Details machine pre-requisites, environment setup, package installations, manual/automated model downloads, and troubleshooting port blocks.
 *   📘 **[User Workflow Manual (guide.md)](guide.md)**: End-user handbook explaining query phrasing, supported chart types, manual adjustments, sidebar collapse, and dark/light modes.
@@ -35,16 +54,16 @@ The **Smart Visualization Agent** integrates a FastAPI backend with a modern, re
 
 ### Datasets Included
 The application comes pre-packaged with two sample datasets:
-*   **`sample.csv` (US Agricultural Exports)**: Taken from the Plotly datasets repository: [2011_us_ag_exports.csv](https://github.com/plotly/datasets/blob/master/2011_us_ag_exports.csv)
-*   **`sample2.csv` (Gapminder Demographic Data)**: Taken from the Plotly datasets repository: [gapminderDataFiveYear.csv](https://github.com/plotly/datasets/blob/master/gapminderDataFiveYear.csv)
+*   **[`sample.csv`](data/sample.csv) (US Agricultural Exports)**: Taken from the Plotly datasets repository: [2011_us_ag_exports.csv](https://github.com/plotly/datasets/blob/master/2011_us_ag_exports.csv)
+*   **[`sample2.csv`](data/sample2.csv) (Gapminder Demographic Data)**: Taken from the Plotly datasets repository: [gapminderDataFiveYear.csv](https://github.com/plotly/datasets/blob/master/gapminderDataFiveYear.csv)
 
 ### Key Architecture Components
 
 *   **FastAPI Backend Server**: Exposes asynchronous endpoints for listing files, uploading new datasets, retrieving system compatibility metrics, and performing natural language visualization parsing.
-*   **Hybrid Parser Coordinator (`core/parser.py`)**:
+*   **Hybrid Parser Coordinator ([`core/parser.py`](core/parser.py))**:
     *   *Local LLM Inference*: Integrates the `gpt4all` Python SDK to run a quantized 3B-parameter model.
     *   *Rule-Based NLP Engine*: A zero-setup, zero-RAM keyword mapping processor that utilizes regex token matching and data-type priority mapping to resolve chart parameters instantly.
-*   **Visualizer Engine (`core/visualization.py`)**: Uses Plotly Express to generate chart configurations (supporting bar, line, scatter, histogram, and pie charts) and styles them dynamically to match active theme layouts.
+*   **Visualizer Engine ([`core/visualization.py`](core/visualization.py))**: Uses Plotly Express to generate chart configurations (supporting bar, line, scatter, histogram, and pie charts) and styles them dynamically to match active theme layouts.
 *   **Single-Page Interface**: Built with high-fidelity glassmorphic panels, glowing indicator states, a live spreadsheet viewer, manual overrides, and a visual history card for restoring previous charts.
 
 ---
@@ -108,7 +127,7 @@ graph TD
 
 ## Hardware Auto-Scanning Logic
 
-The system runs diagnostics via `check_system_compatibility()` in `core/parser.py` using standard python libraries:
+The system runs diagnostics via `check_system_compatibility()` in [`core/parser.py`](core/parser.py) using standard python libraries:
 *   **CPU Instruction Set**: Scans the CPU for AVX/AVX2 support (mandatory for llama.cpp CPU execution). On Windows, it calls the Windows Kernel API directly (`IsProcessorFeaturePresent(19)`) to test for AVX. On macOS, it reads `sysctl`. On Linux, it inspects `/proc/cpuinfo`.
 *   **System RAM**: Evaluates your total and available memory using `psutil`. It requires at least 6.0 GB of total RAM and 1.5 GB of free RAM to allow model execution.
 *   **Free Disk Storage**: Verifies that the drive has at least 2.5 GB of free space (using `shutil.disk_usage`) to fit the model binary.
@@ -160,7 +179,7 @@ Use the global Python virtual environment configured for your workspace:
 ```
 
 ### 2. Install Project Dependencies
-Run `pip` to install the package requirements listed in `requirements.txt`:
+Run `pip` to install the package requirements listed in [`requirements.txt`](/requirements.txt):
 ```powershell
 pip install -r requirements.txt
 ```
@@ -171,16 +190,16 @@ Run the FastAPI development server using `uvicorn`:
 uvicorn app.main:app --reload
 ```
 
-The application will launch on your local host: **`http://127.0.0.1:8000`**
+The application will launch on your local host device: **[`http://127.0.0.1:8000`](`http://127.0.0.1:8000`)** or **[`http://localhost:8000`](`http://127.0.0.1:8000`)**
 
 ---
 
 ## Operating Instructions & Workflow
 
 1.  **Ingest Dataset**:
-    *   Select a pre-loaded sample dataset (like `sample.csv` or `sample2.csv`) from the sidebar.
+    *   Select a pre-loaded sample dataset (like [`sample.csv`](/data/sample.csv) or [`sample2.csv`](/data/sample.csv)) from the sidebar.
     *   Alternatively, drag and drop a custom CSV or Excel (`.xlsx`/`.xls`) file into the dashboard's drop zone.
-    *   *Pro-Tip*: You can also ingest datasets in bulk by copy-pasting your `.csv` or `.xlsx` files directly into the project's `/data` directory. They will appear in the dataset list automatically!
+    *   *Pro-Tip*: You can also ingest datasets in bulk by copy-pasting your `.csv` or `.xlsx` files directly into the project's [`/data`](/data) directory. They will appear in the dataset list automatically!
 2.  **Verify Schema**:
     *   The **Dataset Preview** panel at the bottom will render the first 5 rows and indicate column data types (categorical vs. numeric).
 3.  **Submit Visual Query**:
@@ -208,3 +227,5 @@ Unit tests verify that column mapping and chart parameters are generated correct
 ```powershell
 python -m pytest tests/
 ```
+
+---
