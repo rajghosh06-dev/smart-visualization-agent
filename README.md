@@ -12,7 +12,7 @@ An offline-first, local AI-powered dashboard designed to ingest tabular datasets
 ---
 
 ## 🎥 Walkthrough Demo
-🔗 **[Click here to watch the 2–3 minute video demonstration]()** *(Demo video link to be added)*
+🔗 **[Click here to watch the video demonstration](https://youtu.be/JBBlDOIb56A)** 
 
 ---
 
